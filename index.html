@@ -3,261 +3,498 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Casa Duro — The Operating System for Modular</title>
-<meta name="description" content="CD Tech licenses a standardized, code-compliant Productized Modular + Prefab Building System to modular builders—accelerating housing delivery without the asset heaviness.">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/styles.css">
+<title>Casa Duro — Modular Configurator App</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.11.0/dist/tabler-icons.min.css">
+<style>
+  :root{
+    --bg:#11141a; --panel:#1a1e27; --panel-2:#222734; --line:#2c3340; --line-2:#3a4354;
+    --text:#e9edf4; --muted:#9aa6bd; --faint:#6b7689;
+    --brand:#e8a23d; --brand-2:#c9842a; --accent:#4c8dff;
+    --good:#3ecf8e; --warn:#f0b429; --bad:#ef5b5b;
+    --topbar-h:50px; --status-h:26px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{font-family:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);overflow:hidden;font-size:13px}
+  .app{display:grid;grid-template-rows:var(--topbar-h) 1fr var(--status-h);height:100vh}
+  button{font-family:inherit}
+
+  /* topbar */
+  .topbar{display:flex;align-items:center;gap:6px;padding:0 12px;background:var(--panel);border-bottom:1px solid var(--line)}
+  .brand{display:flex;align-items:center;gap:9px;font-weight:800;margin-right:14px;letter-spacing:.3px}
+  .brand .mark{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;background:linear-gradient(135deg,var(--brand),var(--brand-2));color:#1a1206;font-weight:900;font-size:12px}
+  .toolbar{display:flex;align-items:center;gap:3px}
+  .tool-btn{display:flex;flex-direction:column;align-items:center;gap:2px;background:transparent;border:1px solid transparent;border-radius:7px;color:var(--muted);cursor:pointer;padding:5px 9px;font-size:10px;min-width:50px;transition:.12s}
+  .tool-btn i{font-size:18px}
+  .tool-btn:hover{background:var(--panel-2);color:var(--text)}
+  .tool-btn.active{background:rgba(232,162,61,.16);border-color:var(--brand);color:var(--brand)}
+  .sep{width:1px;height:30px;background:var(--line);margin:0 4px}
+  .spacer{flex:1}
+  .action{background:var(--panel-2);border:1px solid var(--line);color:var(--text);border-radius:7px;padding:8px 13px;cursor:pointer;display:flex;align-items:center;gap:6px;font-size:13px}
+  .action:hover{border-color:var(--brand)}
+  .action.primary{background:linear-gradient(135deg,var(--brand),var(--brand-2));color:#1a1206;border-color:var(--brand);font-weight:600}
+
+  .main{display:grid;grid-template-columns:220px 1fr 300px;overflow:hidden}
+  .sidebar{background:var(--panel);overflow-y:auto;display:flex;flex-direction:column}
+  .left{border-right:1px solid var(--line)} .right{border-left:1px solid var(--line)}
+  .panel-title{padding:10px 12px;font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);font-weight:700;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:6px;position:sticky;top:0;background:var(--panel);z-index:2}
+  .filter-row{display:flex;gap:4px;padding:8px 10px;flex-wrap:wrap}
+  .filter-chip{background:var(--panel-2);border:1px solid var(--line);color:var(--muted);border-radius:20px;padding:3px 10px;cursor:pointer;font-size:11px}
+  .filter-chip.active{background:rgba(232,162,61,.16);border-color:var(--brand);color:var(--brand)}
+  #lib-items{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:8px 10px}
+  .lib-item{background:var(--panel-2);border:1px solid var(--line);border-radius:9px;padding:9px 6px;text-align:center;cursor:pointer;transition:.12s}
+  .lib-item:hover{border-color:var(--brand)}
+  .lib-item.active{border-color:var(--brand);background:rgba(232,162,61,.12)}
+  .lib-icon{font-size:22px;color:var(--brand);margin-bottom:4px}
+  .lib-name{font-size:11px;font-weight:600;line-height:1.2}
+  .lib-dim{font-size:10px;color:var(--muted);margin-top:2px}
+
+  .viewport-wrap{position:relative;overflow:hidden;background:#0c0e13}
+  #viewport{position:absolute;inset:0}
+  .vp-hint{position:absolute;left:12px;bottom:12px;color:var(--muted);font-size:11px;background:rgba(17,20,26,.8);padding:6px 10px;border-radius:7px;border:1px solid var(--line);pointer-events:none;line-height:1.6}
+  .vp-controls{position:absolute;right:12px;top:12px;display:flex;flex-direction:column;gap:6px}
+  .vp-controls button{width:34px;height:34px;border-radius:8px;background:rgba(26,30,39,.92);border:1px solid var(--line);color:var(--text);cursor:pointer;font-size:16px;display:grid;place-items:center}
+  .vp-controls button:hover{border-color:var(--brand)}
+
+  /* right tabs */
+  .tabs{display:flex;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--panel);z-index:2}
+  .tab{flex:1;text-align:center;padding:10px 6px;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent}
+  .tab.active{color:var(--brand);border-bottom-color:var(--brand)}
+  .tab-body{padding:12px;display:none}
+  .tab-body.active{display:block}
+
+  .prop-empty,.bom-empty{color:var(--muted);text-align:center;padding:26px 10px;font-size:12px}
+  .prop-group{margin-bottom:14px}
+  .prop-group h4{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:8px}
+  .prop-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:8px}
+  .prop-row label{font-size:12px;color:var(--muted)}
+  .prop-row input,.prop-row select{background:var(--panel-2);border:1px solid var(--line);color:var(--text);border-radius:6px;padding:5px 8px;font-size:12px;width:120px}
+  .prop-row input:focus,.prop-row select:focus{outline:none;border-color:var(--brand)}
+  .full-btn{width:100%;justify-content:center}
+
+  .bom-cat{margin-bottom:8px;border:1px solid var(--line);border-radius:9px;overflow:hidden}
+  .bom-cat-header{display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:var(--panel-2);font-size:12px;font-weight:600}
+  .bom-cat-header i{margin-right:6px;color:var(--brand)}
+  .cat-count{background:rgba(232,162,61,.18);color:var(--brand);border-radius:10px;padding:1px 8px;font-size:11px}
+  .bom-row{display:flex;justify-content:space-between;padding:5px 10px;font-size:12px}
+  .bom-row:hover{background:var(--panel-2)}
+  .bom-qty{color:var(--muted)}
+
+  /* structural / calctree */
+  .struct-card{background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:12px}
+  .struct-card h4{font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:10px;display:flex;align-items:center;gap:6px}
+  .metric{display:flex;justify-content:space-between;padding:5px 0;font-size:13px;border-bottom:1px solid var(--line)}
+  .metric:last-child{border-bottom:none}
+  .metric .v{font-weight:700}
+  .verdict{display:flex;align-items:center;gap:8px;font-weight:700;font-size:14px;padding:10px 12px;border-radius:9px;margin-bottom:12px}
+  .verdict.pass{background:rgba(62,207,142,.12);color:var(--good);border:1px solid rgba(62,207,142,.3)}
+  .verdict.fail{background:rgba(239,91,91,.12);color:var(--bad);border:1px solid rgba(239,91,91,.3)}
+  .verdict.idle{background:var(--panel-2);color:var(--muted);border:1px solid var(--line)}
+  .ratio-bar{height:7px;border-radius:4px;background:var(--line);overflow:hidden;margin-top:4px}
+  .ratio-bar>span{display:block;height:100%;border-radius:4px}
+  .src-tag{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:2px 7px;border-radius:6px}
+  .src-live{background:rgba(62,207,142,.15);color:var(--good)}
+  .src-mock{background:rgba(240,180,41,.15);color:var(--warn)}
+
+  .statusbar{display:flex;align-items:center;gap:16px;padding:0 14px;background:var(--panel);border-top:1px solid var(--line);color:var(--muted);font-size:11px}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--good);display:inline-block;margin-right:6px}
+  .api-dot{width:7px;height:7px;border-radius:50%;background:var(--accent);display:inline-block;margin-right:5px}
+  ::-webkit-scrollbar{width:9px;height:9px}
+  ::-webkit-scrollbar-thumb{background:#3a414d;border-radius:5px}
+  .spin{animation:spin 1s linear infinite;display:inline-block}
+  @keyframes spin{to{transform:rotate(360deg)}}
+</style>
 </head>
 <body>
-
-<!-- ===================== NAV ===================== -->
-<nav class="nav">
-  <div class="container nav-inner">
-    <a class="logo" href="index.html"><span class="mark">CD</span> CD&nbsp;Tech</a>
-    <div class="nav-links">
-      <a href="#system">The System</a>
-      <a href="#pathways">Partner Pathways</a>
-      <a href="#pricing">Licensing</a>
-      <a href="#projects">Projects</a>
-      <a href="configurator.html">Configurator</a>
+<div class="app">
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="brand"><span class="mark">CD</span><span>Configurator</span></div>
+    <div class="toolbar" id="toolbar">
+      <button class="tool-btn" data-tool="select"   onclick="setTool('select')"><i class="ti ti-pointer"></i>Select</button>
+      <button class="tool-btn" data-tool="module"    onclick="setTool('module')"><i class="ti ti-box"></i>Module</button>
+      <div class="sep"></div>
+      <button class="tool-btn" data-tool="window"    onclick="setTool('window')"><i class="ti ti-border-outer"></i>Window</button>
+      <button class="tool-btn" data-tool="door"      onclick="setTool('door')"><i class="ti ti-door"></i>Door</button>
+      <button class="tool-btn" data-tool="extpanel"  onclick="setTool('extpanel')"><i class="ti ti-layout-sidebar"></i>Ext</button>
+      <button class="tool-btn" data-tool="intpanel"  onclick="setTool('intpanel')"><i class="ti ti-layout-list"></i>Int</button>
+      <button class="tool-btn" data-tool="partition" onclick="setTool('partition')"><i class="ti ti-separator"></i>Wall</button>
     </div>
-    <div class="nav-spacer"></div>
-    <a class="btn btn-ghost btn-sm" href="portal.html">Sign in</a>
-    <a class="btn btn-primary btn-sm" href="portal.html">Open Platform</a>
+    <div class="spacer"></div>
+    <button class="action" onclick="zoomToFit()"><i class="ti ti-maximize"></i>Fit</button>
+    <button class="action" onclick="clearScene()"><i class="ti ti-trash"></i>Clear</button>
+    <button class="action" onclick="exportBOM()"><i class="ti ti-file-spreadsheet"></i>BOM</button>
+    <button class="action primary" onclick="runAnalysis()"><i class="ti ti-calculator"></i>Run Structural</button>
   </div>
-</nav>
 
-<!-- ===================== HERO ===================== -->
-<header class="hero">
-  <div class="container">
-    <span class="eyebrow">● Casa Duro</span>
-    <h1>The Operating System for Modular.</h1>
-    <p class="lede">We license our standardized, code-compliant Productized Modular + Prefab Building System
-      to Modular Builders still building conventionally—accelerating housing delivery without the asset heaviness.</p>
-    <div class="cta-row">
-      <a class="btn btn-primary" href="#pathways">Become a Licensee</a>
-      <a class="btn btn-ghost" href="configurator.html">Try the Configurator →</a>
+  <!-- MAIN -->
+  <div class="main">
+    <div class="sidebar left">
+      <div class="panel-title"><i class="ti ti-library"></i>Component Library</div>
+      <div class="filter-row" id="lib-filters">
+        <span class="filter-chip active" data-filter="" onclick="setLibFilter('')">All</span>
+        <span class="filter-chip" data-filter="window" onclick="setLibFilter('window')">Windows</span>
+        <span class="filter-chip" data-filter="door" onclick="setLibFilter('door')">Doors</span>
+        <span class="filter-chip" data-filter="panel" onclick="setLibFilter('panel')">Panels</span>
+      </div>
+      <div id="lib-items"></div>
     </div>
-  </div>
-</header>
 
-<!-- ===================== THE SYSTEM ===================== -->
-<section id="system">
-  <div class="container">
-    <div class="section-head">
-      <h2>One building system. Every assembly plant.</h2>
-      <p>Pre-engineered, code-compliant components with built-in flexibility and embedded engineering knowledge—
-         designed to be assembled anywhere by anyone qualified.</p>
+    <div class="viewport-wrap">
+      <div id="viewport"></div>
+      <div class="vp-controls">
+        <button title="Fit" onclick="zoomToFit()"><i class="ti ti-maximize"></i></button>
+        <button title="Top" onclick="setView('top')"><i class="ti ti-arrow-down"></i></button>
+        <button title="Front" onclick="setView('front')"><i class="ti ti-arrow-up"></i></button>
+        <button title="Iso" onclick="setView('iso')"><i class="ti ti-cube"></i></button>
+      </div>
+      <div class="vp-hint"><b>Orbit</b> right-drag / alt-drag · <b>Pan</b> shift-drag · <b>Zoom</b> scroll<br>Pick a tool, click the ground to place</div>
     </div>
-    <div class="grid grid-3">
-      <div class="card">
-        <div class="ico">◇</div>
-        <h3>Standardized IP</h3>
-        <p>Pre-engineered, code-compliant with built in flexibility and embedded knowledge, our Building System
-           Modules and Prefab Elements work across multiple climate and building code iterations.
-           Don't reinvent the wheel for every project.</p>
+
+    <div class="sidebar right">
+      <div class="tabs">
+        <div class="tab active" data-tab="props" onclick="setTab('props')">Properties</div>
+        <div class="tab" data-tab="struct" onclick="setTab('struct')">Structural</div>
+        <div class="tab" data-tab="bom" onclick="setTab('bom')">BOM</div>
       </div>
-      <div class="card">
-        <div class="ico">⊞</div>
-        <h3>Assembly Plant Agnostic</h3>
-        <p>Our "Patented IP" allows any qualified manufacturer to assemble compliant modules.
-           We don't own the Assembly Plants; we power them.</p>
-      </div>
-      <div class="card">
-        <div class="ico">⚙</div>
-        <h3>Assembly Plants</h3>
-        <p>Maximize throughput with licensed production drawings and QA systems—turning skilled-labour
-           bottlenecks into repeatable, certified assembly.</p>
-      </div>
+      <div class="tab-body active" id="tab-props"><div id="props-content"></div></div>
+      <div class="tab-body" id="tab-struct"><div id="struct-content"></div></div>
+      <div class="tab-body" id="tab-bom"><div id="bom-cats"></div></div>
     </div>
   </div>
-</section>
 
-<!-- ===================== PARTNER PATHWAYS ===================== -->
-<section id="pathways" class="alt">
-  <div class="container">
-    <div class="section-head">
-      <h2>Partner Pathways</h2>
-      <p>Choose how you plug into the Casa Duro network.</p>
-    </div>
-
-    <div class="pathway">
-      <div>
-        <h3 style="font-size:22px;font-weight:800;margin-bottom:10px">For Modular Builder Licensee</h3>
-        <p class="muted">Fill your production lines with standardized prefab, easy-to-assemble product that doesn't
-          require expensive equipment or skilled labour.</p>
-        <p class="muted" style="margin-top:12px">Streamline your business and become a <b class="brand-text">Casa Duro
-          Certified Modular Builder Licensee</b> and produce from our prefab, standardized Building System arriving at
-          your assembly plant from our network of manufacturers across Canada.</p>
-        <div class="pill-row">
-          <span class="pill">Zero R&amp;D Cost</span>
-          <span class="pill">Optimized BOMs</span>
-          <span class="pill">Integrated West-to-East Canadian Supply Chain</span>
-        </div>
-        <a class="btn btn-primary btn-sm" href="portal.html">Apply for Licensing</a>
-      </div>
-      <div class="req-box">
-        <h4>Requirements</h4>
-        <ul>
-          <li>Minimum 10,000 sqft facility</li>
-          <li>ISO 9001 Certification</li>
-          <li>Capacity for 60+ modules / year</li>
-        </ul>
-      </div>
-    </div>
+  <!-- STATUS -->
+  <div class="statusbar">
+    <span><span class="dot"></span><span id="status-msg">Ready</span></span>
+    <span id="status-tool">Tool: Select</span>
+    <span id="status-count">Objects: 0</span>
+    <span class="spacer"></span>
+    <span><span class="api-dot"></span>API: <span id="api-state">window.CasaDuroApp ready</span></span>
+    <span>Units: meters</span>
   </div>
-</section>
+</div>
 
-<!-- ===================== LICENSING MODELS ===================== -->
-<section id="pricing">
-  <div class="container">
-    <div class="section-head">
-      <h2>Licensing Models</h2>
-      <p>Flexible licensing tiers from single-family builders to full factory partners.</p>
-    </div>
-    <div class="price-grid">
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+<script>
+/* =====================================================================
+   CASA DURO CONFIGURATOR  —  single interactive app
+   Exposes a public API (window.CasaDuroApp) + postMessage bridge so a
+   host platform can embed and drive it. Structural calcs via CalcTree.
+   ===================================================================== */
 
-      <div class="tier">
-        <h3>Single Family Modular Builder Licensee</h3>
-        <div class="price">Annual</div>
-        <p class="muted" style="font-size:13.5px">For builders delivering single-family modular homes.</p>
-        <ul>
-          <li>Choose from library of Designs</li>
-          <li>Optimized BOMs</li>
-          <li>QA/QC integration</li>
-          <li>Technical Support</li>
-        </ul>
-        <a class="btn btn-ghost btn-sm" href="portal.html">Get started</a>
-      </div>
+/* ---------- catalog ---------- */
+const MATERIALS={
+  steel:{name:'Steel Cladding',color:0x9aa3ad,density:7850},
+  alu:{name:'Aluminium',color:0xc4ccd4,density:2700},
+  timber:{name:'Timber',color:0xc89b6a,density:600},
+  concrete:{name:'Concrete Panel',color:0x8d9094,density:2400},
+  glass:{name:'Glazed',color:0x88c0e0,density:2500},
+  composite:{name:'Composite',color:0x6f7a86,density:1500},
+};
+const WINDOW_TYPES=[
+  {id:'win-s',name:'Small',label:'0.9×1.2m',w:0.9,h:1.2},
+  {id:'win-m',name:'Medium',label:'1.2×1.5m',w:1.2,h:1.5},
+  {id:'win-l',name:'Large',label:'1.8×1.5m',w:1.8,h:1.5},
+  {id:'win-f',name:'Floor',label:'2.4×2.4m',w:2.4,h:2.4},
+];
+const DOOR_TYPES=[
+  {id:'dr-s',name:'Single',label:'0.9×2.1m',w:0.9,h:2.1},
+  {id:'dr-d',name:'Double',label:'1.8×2.1m',w:1.8,h:2.1},
+  {id:'dr-slide',name:'Sliding',label:'2.4×2.1m',w:2.4,h:2.1},
+];
+const PANEL_TYPES=[
+  {id:'pn-std',name:'Standard',label:'1.2×3.0m',w:1.2,h:3.0,material:'steel'},
+  {id:'pn-wide',name:'Wide',label:'2.4×3.0m',w:2.4,h:3.0,material:'composite'},
+  {id:'pn-glass',name:'Glazed',label:'1.2×3.0m',w:1.2,h:3.0,material:'glass'},
+];
+const DEFAULT_MODULE={w:3,l:6,h:3};
 
-      <div class="tier featured">
-        <span class="badge">Most Popular</span>
-        <h3>Multi-Story Modular Builder Licensee</h3>
-        <div class="price">Annual</div>
-        <p class="muted" style="font-size:13.5px">For builders scaling into multi-story modular projects.</p>
-        <ul>
-          <li>Regional exclusivity options</li>
-          <li>Choose from library of Designs</li>
-          <li>Professional design services available</li>
-          <li>Supply Chain Pricing Access</li>
-          <li>QA/QC integration</li>
-          <li>Technical Support</li>
-        </ul>
-        <a class="btn btn-primary btn-sm" href="portal.html">Get started</a>
-      </div>
+/* =====================================================================
+   CALCTREE CONFIG  —  set these to wire the real structural model.
+   Until configured, the app runs a transparent local estimate (mock)
+   so the configurator stays fully functional.
+   ===================================================================== */
+const CALCTREE={
+  enabled:false,                         // flip true once endpoint+key are set
+  endpoint:'https://api.calctree.com/v1/calculations/run',
+  apiKey:'',                             // <-- your CalcTree API key
+  modelId:'',                            // <-- your published CalcTree model/sheet id
+  // map app structural inputs -> CalcTree input parameter names
+  inputMap:{
+    totalDeadLoad_kN:'dead_load',
+    totalLiveLoad_kN:'live_load',
+    storeys:'num_storeys',
+    maxAxialLoad_kN:'axial_load',
+    maxSpan_m:'span',
+    footprint_m2:'footprint',
+  },
+  // map CalcTree output parameter names -> app result fields
+  outputMap:{
+    utilisation:'utilisation',           // 0..1 demand/capacity
+    pass:'pass',
+    governing:'governing_check',
+    maxDeflection_mm:'deflection',
+  },
+};
 
-      <div class="tier">
-        <h3>Factory Partner with Assembly Plant</h3>
-        <div class="price">Enterprise</div>
-        <p class="muted" style="font-size:13.5px">For manufacturers operating full assembly plants.</p>
-        <ul>
-          <li>Custom system modifications</li>
-          <li>White-label branding</li>
-          <li>Full manufacturing SOPs</li>
-          <li>Supply Chain Pricing Access</li>
-          <li>QA/QC integration</li>
-          <li>Technical Support</li>
-        </ul>
-        <a class="btn btn-ghost btn-sm" href="portal.html">Talk to us</a>
-      </div>
+/* ---------- state ---------- */
+let scene,camera,renderer,raycaster,groundPlane,gridHelper;
+let objects=[];
+let currentTool='select',activeLibItem=null,libFilter='',selected=null,objCounter=0;
+let lastAnalysis=null;
+const cam={target:new THREE.Vector3(0,1.5,0),radius:18,theta:0.9,phi:1.0};
 
-      <div class="tier">
-        <h3>Annual + Royalty</h3>
-        <div class="price">Custom</div>
-        <p class="muted" style="font-size:13.5px">Tailored commercial terms for strategic partners.</p>
-        <ul>
-          <li>Regional exclusivity options</li>
-          <li>Custom system modifications</li>
-          <li>White-label branding</li>
-          <li>Professional design services available</li>
-          <li>Full manufacturing SOPs</li>
-          <li>Technical Support</li>
-        </ul>
-        <a class="btn btn-ghost btn-sm" href="portal.html">Contact sales</a>
-      </div>
+/* =====================================================================
+   PUBLIC API  (window.CasaDuroApp) + event bus + postMessage bridge
+   ===================================================================== */
+const _listeners={};
+function emit(event,detail){
+  (_listeners[event]||[]).forEach(fn=>{try{fn(detail);}catch(e){console.error(e);}});
+  (_listeners['*']||[]).forEach(fn=>{try{fn({event,detail});}catch(e){console.error(e);}});
+  // bridge to host platform if embedded in an iframe
+  if(window.parent && window.parent!==window){
+    window.parent.postMessage({source:'casaduro',event,detail},'*');
+  }
+}
+function serializeObject(o){
+  return {id:o.id,type:o.type,w:o.w,l:o.l,h:o.h,material:o.material,libItem:o.libItem,
+    label:o.label,x:+o.mesh.position.x.toFixed(3),z:+o.mesh.position.z.toFixed(3),
+    rotation:+(o.mesh.rotation.y*180/Math.PI).toFixed(1)};
+}
 
-    </div>
-  </div>
-</section>
+window.CasaDuroApp={
+  version:'1.0.0',
+  /* ---- catalog ---- */
+  getCatalog(){return {materials:MATERIALS,windows:WINDOW_TYPES,doors:DOOR_TYPES,panels:PANEL_TYPES,defaultModule:DEFAULT_MODULE};},
+  /* ---- model io ---- */
+  getModel(){return {objects:objects.map(serializeObject)};},
+  loadModel(model){
+    clearScene(true);
+    (model?.objects||[]).forEach(d=>{
+      const pt=new THREE.Vector3(d.x||0,0,d.z||0);
+      activeLibItem=d.libItem?[...WINDOW_TYPES,...DOOR_TYPES,...PANEL_TYPES].find(t=>t.id===d.libItem):null;
+      const o=spawn(d.type,pt,d);
+      if(o&&d.rotation)o.mesh.rotation.y=d.rotation*Math.PI/180;
+    });
+    activeLibItem=null;updateBOM();updateCount();render3DSelectionState();
+    emit('model:loaded',this.getModel());
+    return this.getModel();
+  },
+  clear(){clearScene();return this.getModel();},
+  /* ---- object ops ---- */
+  addObject(type,opts={}){
+    const pt=new THREE.Vector3(opts.x||0,0,opts.z||0);
+    if(opts.libItem)activeLibItem=[...WINDOW_TYPES,...DOOR_TYPES,...PANEL_TYPES].find(t=>t.id===opts.libItem)||null;
+    const o=spawn(type,pt,opts); activeLibItem=null;
+    if(o){updateBOM();updateCount();emit('object:added',serializeObject(o));return serializeObject(o);}
+    return null;
+  },
+  removeObject(id){const o=objects.find(x=>x.id===id);if(!o)return false;if(selected===o)selectObject(null);scene.remove(o.mesh);objects=objects.filter(x=>x!==o);updateBOM();updateCount();emit('object:removed',{id});return true;},
+  selectObject(id){selectObject(objects.find(x=>x.id===id)||null);return selected?serializeObject(selected):null;},
+  /* ---- outputs ---- */
+  getBOM(){return computeBOM();},
+  exportBOM(){exportBOM();},
+  getStructuralInputs(){return computeStructuralInputs();},
+  async runStructuralAnalysis(){return await runAnalysis();},
+  getLastAnalysis(){return lastAnalysis;},
+  /* ---- view ---- */
+  setTool, setView, zoomToFit,
+  /* ---- config ---- */
+  configureCalcTree(cfg){Object.assign(CALCTREE,cfg);setApiState();return {...CALCTREE,apiKey:CALCTREE.apiKey?'***':''};},
+  /* ---- events: on('object:added',cb) | on('*',cb) ---- */
+  on(event,cb){(_listeners[event]=_listeners[event]||[]).push(cb);return ()=>this.off(event,cb);},
+  off(event,cb){_listeners[event]=(_listeners[event]||[]).filter(f=>f!==cb);},
+};
 
-<!-- ===================== COMPLETED PROJECTS ===================== -->
-<section id="projects" class="alt">
-  <div class="container">
-    <div class="section-head">
-      <h2>Completed Projects</h2>
-      <p>Multi-story modular delivery and single-family homes built on the Casa Duro system.</p>
-    </div>
-    <div class="grid grid-3">
-      <div class="project">
-        <div class="chip">Multi-Story</div>
-        <div class="img">Multi-story modular project</div>
-        <div class="meta"><h4>Mid-Rise Residential</h4><span>Modular · 6 storeys</span></div>
-      </div>
-      <div class="project">
-        <div class="chip">Multi-Story</div>
-        <div class="img">Multi-story modular project</div>
-        <div class="meta"><h4>Mixed-Use Block</h4><span>Modular · 8 storeys</span></div>
-      </div>
-      <div class="project">
-        <div class="chip">Single Family</div>
-        <div class="img">Casa Duro single-family home</div>
-        <div class="meta"><h4>Detached Home</h4><span>Casa Duro · single family</span></div>
-      </div>
-    </div>
-    <p class="faint" style="font-size:13px;margin-top:14px">
-      Imagery: multi-story modular projects and single-family examples from Casa Duro's portfolio.
-    </p>
-  </div>
-</section>
+/* host -> app commands via postMessage:
+   parent.postMessage({target:'casaduro', method:'addObject', args:['module',{x:0,z:0}], id:42}) */
+window.addEventListener('message',async e=>{
+  const m=e.data; if(!m||m.target!=='casaduro'||!m.method)return;
+  const fn=window.CasaDuroApp[m.method];
+  if(typeof fn!=='function'){e.source?.postMessage({source:'casaduro',replyTo:m.id,error:'unknown method '+m.method},'*');return;}
+  try{const result=await fn.apply(window.CasaDuroApp,m.args||[]);
+    e.source?.postMessage({source:'casaduro',replyTo:m.id,result},'*');}
+  catch(err){e.source?.postMessage({source:'casaduro',replyTo:m.id,error:String(err)},'*');}
+});
 
-<!-- ===================== CTA ===================== -->
-<section>
-  <div class="container center">
-    <h2 style="font-size:clamp(26px,3.4vw,38px);font-weight:800">Power your assembly plant with Casa Duro.</h2>
-    <p class="muted" style="max-width:55ch;margin:14px auto 26px">Join the network of certified modular builders
-      delivering code-compliant housing faster.</p>
-    <a class="btn btn-primary" href="portal.html">Open the Platform</a>
-  </div>
-</section>
+/* =====================================================================
+   TOOLS / LIBRARY / TABS
+   ===================================================================== */
+function setTool(tool){currentTool=tool;document.querySelectorAll('.tool-btn').forEach(b=>b.classList.toggle('active',b.dataset.tool===tool));document.getElementById('status-tool').textContent='Tool: '+tool[0].toUpperCase()+tool.slice(1);if(tool==='select'){activeLibItem=null;buildLibrary();}setStatus(tool==='select'?'Select objects to edit':'Click ground to place '+tool);emit('tool:changed',{tool});}
+function setLibFilter(f){libFilter=f;document.querySelectorAll('.filter-chip').forEach(c=>c.classList.toggle('active',c.dataset.filter===f));buildLibrary();}
+function setTab(t){document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x.dataset.tab===t));document.querySelectorAll('.tab-body').forEach(x=>x.classList.remove('active'));document.getElementById('tab-'+t).classList.add('active');if(t==='struct')renderStruct();}
+function buildLibrary(){const el=document.getElementById('lib-items');let items=[];if(!libFilter||libFilter==='window')items.push(...WINDOW_TYPES.map(t=>({...t,cat:'window'})));if(!libFilter||libFilter==='door')items.push(...DOOR_TYPES.map(t=>({...t,cat:'door'})));if(!libFilter||libFilter==='panel')items.push(...PANEL_TYPES.map(t=>({...t,cat:'panel'})));const icons={window:'ti-border-outer',door:'ti-door',panel:'ti-layout-sidebar'};el.innerHTML=items.map(item=>`<div class="lib-item ${activeLibItem?.id===item.id?'active':''}" onclick="selectLibItem('${item.id}','${item.cat}')"><div class="lib-icon"><i class="ti ${icons[item.cat]||'ti-box'}"></i></div><div class="lib-name">${item.name}</div><div class="lib-dim">${item.label}</div></div>`).join('');}
+function selectLibItem(id,cat){const all=[...WINDOW_TYPES,...DOOR_TYPES,...PANEL_TYPES];activeLibItem=all.find(t=>t.id===id)||null;if(cat==='window'&&currentTool!=='window')setTool('window');else if(cat==='door'&&currentTool!=='door')setTool('door');else if(cat==='panel'&&currentTool!=='extpanel')setTool('extpanel');buildLibrary();}
 
-<!-- ===================== FOOTER ===================== -->
-<footer>
-  <div class="container">
-    <div class="foot-grid">
-      <div>
-        <a class="logo" href="index.html"><span class="mark">CD</span> CD&nbsp;Tech</a>
-        <p class="muted" style="margin-top:14px;max-width:36ch;font-size:14px">The Operating System for Modular.
-          Licensing a standardized, code-compliant building system to modular builders across Canada.</p>
-      </div>
-      <div>
-        <h5>Platform</h5>
-        <a href="portal.html">Supplier Portal</a>
-        <a href="portal.html">Licensee Interface</a>
-        <a href="configurator.html">Configurator</a>
-        <a href="portal.html">Data Resources</a>
-      </div>
-      <div>
-        <h5>Stakeholders</h5>
-        <a href="portal.html">Suppliers</a>
-        <a href="portal.html">Licensees</a>
-        <a href="portal.html">AOR / EOR</a>
-        <a href="portal.html">Government</a>
-      </div>
-      <div>
-        <h5>Company</h5>
-        <a href="#system">The System</a>
-        <a href="#pricing">Licensing</a>
-        <a href="#projects">Projects</a>
-        <a href="portal.html">Sign in</a>
-      </div>
-    </div>
-    <div class="foot-bottom">
-      <span>© 2026 CD Tech / Casa Duro. All rights reserved.</span>
-      <span>Structural calculations powered by CalcTree.</span>
-    </div>
-  </div>
-</footer>
+/* =====================================================================
+   THREE.JS
+   ===================================================================== */
+function initThree(){
+  const wrap=document.getElementById('viewport');
+  scene=new THREE.Scene();scene.background=new THREE.Color(0x0c0e13);scene.fog=new THREE.Fog(0x0c0e13,40,95);
+  camera=new THREE.PerspectiveCamera(50,wrap.clientWidth/wrap.clientHeight,0.1,1000);
+  renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(window.devicePixelRatio);
+  renderer.setSize(wrap.clientWidth,wrap.clientHeight);renderer.shadowMap.enabled=true;wrap.appendChild(renderer.domElement);
+  scene.add(new THREE.AmbientLight(0xffffff,0.55));
+  const sun=new THREE.DirectionalLight(0xffffff,0.9);sun.position.set(12,20,8);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);
+  sun.shadow.camera.left=-30;sun.shadow.camera.right=30;sun.shadow.camera.top=30;sun.shadow.camera.bottom=-30;scene.add(sun);
+  scene.add(new THREE.HemisphereLight(0xaaccff,0x223344,0.4));
+  groundPlane=new THREE.Mesh(new THREE.PlaneGeometry(200,200),new THREE.MeshStandardMaterial({color:0x141821,roughness:1}));
+  groundPlane.rotation.x=-Math.PI/2;groundPlane.receiveShadow=true;groundPlane.name='ground';scene.add(groundPlane);
+  gridHelper=new THREE.GridHelper(200,200,0x2a3038,0x20252c);scene.add(gridHelper);
+  raycaster=new THREE.Raycaster();updateCamera();
+  const c=renderer.domElement;
+  c.addEventListener('pointerdown',onPointerDown);c.addEventListener('pointermove',onPointerMove);
+  c.addEventListener('pointerup',onPointerUp);c.addEventListener('wheel',onWheel,{passive:false});
+  c.addEventListener('contextmenu',e=>e.preventDefault());
+  window.addEventListener('resize',onResize);window.addEventListener('keydown',onKeyDown);
+  buildLibrary();updateProps();updateBOM();renderStruct();updateCount();setApiState();animate();
+  emit('ready',{version:window.CasaDuroApp.version});
+}
+function updateCamera(){cam.phi=Math.max(0.15,Math.min(Math.PI/2-0.02,cam.phi));cam.radius=Math.max(4,Math.min(80,cam.radius));
+  camera.position.set(cam.target.x+cam.radius*Math.sin(cam.phi)*Math.cos(cam.theta),cam.target.y+cam.radius*Math.cos(cam.phi),cam.target.z+cam.radius*Math.sin(cam.phi)*Math.sin(cam.theta));camera.lookAt(cam.target);}
+function animate(){requestAnimationFrame(animate);renderer.render(scene,camera);}
+function onResize(){const wrap=document.getElementById('viewport');camera.aspect=wrap.clientWidth/wrap.clientHeight;camera.updateProjectionMatrix();renderer.setSize(wrap.clientWidth,wrap.clientHeight);}
 
+/* navigation */
+const drag={active:false,mode:null,x:0,y:0};
+function onPointerDown(e){drag.x=e.clientX;drag.y=e.clientY;const orbit=(e.button===0&&e.altKey);const pan=(e.button===1)||(e.button===0&&e.shiftKey);if(e.button===2||orbit){drag.active=true;drag.mode='orbit';return;}if(pan){drag.active=true;drag.mode='pan';return;}if(e.button===0)handleLeftClick(e);}
+function onPointerMove(e){if(!drag.active)return;const dx=e.clientX-drag.x,dy=e.clientY-drag.y;drag.x=e.clientX;drag.y=e.clientY;if(drag.mode==='orbit'){cam.theta-=dx*0.005;cam.phi-=dy*0.005;updateCamera();}else if(drag.mode==='pan'){const s=cam.radius*0.0016;const right=new THREE.Vector3();camera.getWorldDirection(right);right.cross(camera.up).normalize();cam.target.addScaledVector(right,-dx*s);cam.target.addScaledVector(new THREE.Vector3(0,1,0),dy*s);updateCamera();}}
+function onPointerUp(){drag.active=false;drag.mode=null;}
+function onWheel(e){e.preventDefault();cam.radius*=(1+Math.sign(e.deltaY)*0.1);updateCamera();}
+function screenToGround(e){const r=renderer.domElement.getBoundingClientRect();const m=new THREE.Vector2(((e.clientX-r.left)/r.width)*2-1,-((e.clientY-r.top)/r.height)*2+1);raycaster.setFromCamera(m,camera);const hit=raycaster.intersectObject(groundPlane);return hit.length?hit[0].point:null;}
+function pickObject(e){const r=renderer.domElement.getBoundingClientRect();const m=new THREE.Vector2(((e.clientX-r.left)/r.width)*2-1,-((e.clientY-r.top)/r.height)*2+1);raycaster.setFromCamera(m,camera);const hit=raycaster.intersectObjects(objects.map(o=>o.mesh),true);if(!hit.length)return null;let mesh=hit[0].object;while(mesh.parent&&!mesh.userData.objId)mesh=mesh.parent;return objects.find(o=>o.id===mesh.userData.objId)||null;}
+function handleLeftClick(e){if(currentTool==='select'){selectObject(pickObject(e));return;}const pt=screenToGround(e);if(!pt)return;pt.x=Math.round(pt.x*2)/2;pt.z=Math.round(pt.z*2)/2;const o=spawn(currentTool,pt);if(o){selectObject(o);updateBOM();updateCount();setStatus('Placed '+currentTool);emit('object:added',serializeObject(o));}}
+
+/* =====================================================================
+   OBJECT FACTORY
+   ===================================================================== */
+function spawn(type,pt,opts={}){let o;if(type==='module')o=makeModule(pt,opts);else if(type==='window'||type==='door')o=makeOpening(type,pt,opts);else o=makePanel(type,pt,opts);if(o){objects.push(o);scene.add(o.mesh);}return o;}
+function makeModule(pt,opts){const w=opts.w||DEFAULT_MODULE.w,l=opts.l||DEFAULT_MODULE.l,h=opts.h||DEFAULT_MODULE.h;const geo=new THREE.BoxGeometry(w,h,l);const mesh=new THREE.Mesh(geo,new THREE.MeshStandardMaterial({color:0x4a5260,roughness:0.7,metalness:0.1,transparent:true,opacity:0.92}));mesh.position.set(pt.x,h/2,pt.z);mesh.castShadow=mesh.receiveShadow=true;mesh.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo),new THREE.LineBasicMaterial({color:0x8da2c0})));const id='obj'+(++objCounter);mesh.userData.objId=id;return {id,type:'module',mesh,w,l,h,label:`${w}×${l}×${h}m`,baseColor:0x4a5260};}
+function makeOpening(type,pt,opts){const def=activeLibItem||(type==='window'?WINDOW_TYPES[1]:DOOR_TYPES[0]);const w=opts.w||def.w,h=opts.h||def.h;const color=type==='window'?0x88c0e0:0x6a4a2a;const geo=new THREE.BoxGeometry(w,h,0.12);const mesh=new THREE.Mesh(geo,new THREE.MeshStandardMaterial({color,roughness:type==='window'?0.1:0.6,metalness:0.1,transparent:type==='window',opacity:type==='window'?0.5:1}));mesh.position.set(pt.x,h/2,pt.z);mesh.castShadow=true;const id='obj'+(++objCounter);mesh.userData.objId=id;return {id,type,mesh,w,h,libItem:def.id,label:def.name};}
+function makePanel(type,pt,opts){const def=activeLibItem||PANEL_TYPES[0];const w=opts.w||def.w||1.2,h=opts.h||def.h||3.0;const material=opts.material||def.material||(type==='partition'?'composite':'steel');const geo=new THREE.BoxGeometry(w,h,0.12);const mesh=new THREE.Mesh(geo,new THREE.MeshStandardMaterial({color:MATERIALS[material].color,roughness:0.6,metalness:0.2,transparent:material==='glass',opacity:material==='glass'?0.45:1}));mesh.position.set(pt.x,h/2,pt.z);mesh.castShadow=mesh.receiveShadow=true;const id='obj'+(++objCounter);mesh.userData.objId=id;const labels={extpanel:'Ext. Panel',intpanel:'Int. Panel',partition:'Partition'};return {id,type,mesh,w,h,material,label:labels[type]||'Panel'};}
+
+function selectObject(o){if(selected&&selected.mesh&&selected.mesh.material)selected.mesh.material.emissive?.setHex(0x000000);selected=o;render3DSelectionState();updateProps();emit('selection:changed',o?serializeObject(o):null);}
+function render3DSelectionState(){if(selected&&selected.mesh&&selected.mesh.material)selected.mesh.material.emissive=new THREE.Color(0x3a2c10);}
+function deleteSelected(){if(!selected)return;const id=selected.id;scene.remove(selected.mesh);objects=objects.filter(x=>x!==selected);selected=null;updateProps();updateBOM();updateCount();setStatus('Deleted object');emit('object:removed',{id});}
+function clearScene(silent){objects.forEach(o=>scene.remove(o.mesh));objects=[];selected=null;updateProps();updateBOM();updateCount();if(!silent){setStatus('Scene cleared');emit('model:loaded',{objects:[]});}}
+
+/* =====================================================================
+   PROPERTIES
+   ===================================================================== */
+function updateProps(){const el=document.getElementById('props-content');if(!selected){el.innerHTML='<div class="prop-empty">No object selected.<br>Use Select and click an object.</div>';return;}const o=selected;let rows='';rows+=`<div class="prop-row"><label>Type</label><input value="${o.type}" disabled></div>`;rows+=`<div class="prop-row"><label>Width (m)</label><input type="number" step="0.1" value="${o.w}" onchange="editDim('w',this.value)"></div>`;if(o.type==='module')rows+=`<div class="prop-row"><label>Length (m)</label><input type="number" step="0.1" value="${o.l}" onchange="editDim('l',this.value)"></div>`;rows+=`<div class="prop-row"><label>Height (m)</label><input type="number" step="0.1" value="${o.h}" onchange="editDim('h',this.value)"></div>`;rows+=`<div class="prop-row"><label>Rotate °</label><input type="number" step="15" value="${Math.round(o.mesh.rotation.y*180/Math.PI)}" onchange="editRot(this.value)"></div>`;if(o.material!==undefined&&o.type!=='window'&&o.type!=='door'){const opts=Object.entries(MATERIALS).map(([k,v])=>`<option value="${k}" ${o.material===k?'selected':''}>${v.name}</option>`).join('');rows+=`<div class="prop-row"><label>Material</label><select onchange="editMaterial(this.value)">${opts}</select></div>`;}el.innerHTML=`<div class="prop-group"><h4>${o.label||o.type}</h4>${rows}</div><div class="prop-group"><button class="action full-btn" onclick="deleteSelected()"><i class="ti ti-trash"></i>Delete</button></div>`;}
+function rebuildMesh(o){const pos=o.mesh.position.clone(),rot=o.mesh.rotation.clone();scene.remove(o.mesh);let geo,color,opts={};if(o.type==='module'){geo=new THREE.BoxGeometry(o.w,o.h,o.l);color=o.baseColor;opts={transparent:true,opacity:0.92};}else if(o.type==='window'){geo=new THREE.BoxGeometry(o.w,o.h,0.12);color=0x88c0e0;opts={transparent:true,opacity:0.5};}else if(o.type==='door'){geo=new THREE.BoxGeometry(o.w,o.h,0.12);color=0x6a4a2a;}else{geo=new THREE.BoxGeometry(o.w,o.h,0.12);color=MATERIALS[o.material].color;if(o.material==='glass')opts={transparent:true,opacity:0.45};}const mesh=new THREE.Mesh(geo,new THREE.MeshStandardMaterial({color,roughness:0.6,metalness:0.15,...opts}));mesh.position.copy(pos);mesh.position.y=o.h/2;mesh.rotation.copy(rot);mesh.castShadow=mesh.receiveShadow=true;mesh.userData.objId=o.id;if(o.type==='module')mesh.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo),new THREE.LineBasicMaterial({color:0x8da2c0})));o.mesh=mesh;scene.add(mesh);}
+function editDim(k,v){if(!selected)return;selected[k]=parseFloat(v)||0.1;if(selected.type==='module')selected.label=`${selected.w}×${selected.l}×${selected.h}m`;rebuildMesh(selected);render3DSelectionState();updateBOM();emit('object:changed',serializeObject(selected));}
+function editRot(v){if(!selected)return;selected.mesh.rotation.y=(parseFloat(v)||0)*Math.PI/180;emit('object:changed',serializeObject(selected));}
+function editMaterial(v){if(!selected)return;selected.material=v;rebuildMesh(selected);render3DSelectionState();updateBOM();emit('object:changed',serializeObject(selected));}
+
+/* =====================================================================
+   BOM
+   ===================================================================== */
+function computeBOM(){const cats={module:'Module',window:'Window',door:'Door',extpanel:'Exterior Panel',intpanel:'Interior Panel',partition:'Partition'};const grouped={};objects.forEach(o=>{const cat=cats[o.type]||o.type;let desc,w,h,d,mat;if(o.type==='module'){desc=o.label;w=o.w;h=o.h;d=o.l;mat='—';}else if(o.type==='window'||o.type==='door'){const t=[...WINDOW_TYPES,...DOOR_TYPES].find(x=>x.id===o.libItem);desc=t?.name||'—';w=o.w;h=o.h;d=0.1;mat='—';}else{desc=o.label;w=o.w||1.2;h=o.h||3.0;d=0.12;mat=MATERIALS[o.material]?.name||'—';}const key=`${cat}|${desc}|${w}|${h}|${d}|${mat}`;if(!grouped[key])grouped[key]={category:cat,description:desc,width:w,height:h,depth:d,material:mat,qty:0};grouped[key].qty++;});return Object.values(grouped);}
+function updateBOM(){const el=document.getElementById('bom-cats');const cats={module:{label:'Modules',icon:'ti-box',items:[]},window:{label:'Windows',icon:'ti-border-outer',items:[]},door:{label:'Doors',icon:'ti-door',items:[]},extpanel:{label:'Ext. Panels',icon:'ti-layout-sidebar',items:[]},intpanel:{label:'Int. Panels',icon:'ti-layout-list',items:[]},partition:{label:'Partitions',icon:'ti-separator',items:[]}};objects.forEach(o=>{if(cats[o.type])cats[o.type].items.push(o);});const populated=Object.entries(cats).filter(([,c])=>c.items.length>0);if(!populated.length){el.innerHTML='<div class="bom-empty"><i class="ti ti-box" style="font-size:18px;opacity:.3"></i><br>Add modules to generate BOM</div>';return;}el.innerHTML=populated.map(([k,cat])=>{const grouped={};cat.items.forEach(o=>{const key=k==='module'?`${o.w}×${o.l}×${o.h}m`:k==='window'||k==='door'?`${o.w}×${o.h}m`:`${(o.w||1.2).toFixed(1)}×${(o.h||3).toFixed(1)}m${o.material?' ('+MATERIALS[o.material]?.name+')':''}`;grouped[key]=(grouped[key]||0)+1;});return `<div class="bom-cat"><div class="bom-cat-header"><span><i class="ti ${cat.icon}"></i>${cat.label}</span><span class="cat-count">${cat.items.length}</span></div><div>${Object.entries(grouped).map(([desc,qty])=>`<div class="bom-row"><span>${desc}</span><span class="bom-qty">×${qty}</span></div>`).join('')}</div></div>`;}).join('');}
+function exportBOM(){const rows=[['Category','Description','Width(m)','Height(m)','Depth(m)','Material','Qty']];computeBOM().forEach(r=>rows.push([r.category,r.description,r.width,r.height,r.depth,r.material,r.qty]));const csv=rows.map(r=>r.map(c=>`"${c}"`).join(',')).join('\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='casaduro_bom.csv';a.click();setStatus('Exported BOM ('+(rows.length-1)+' lines)');emit('bom:exported',{lines:rows.length-1});}
+
+/* =====================================================================
+   STRUCTURAL INPUTS + CALCTREE
+   ===================================================================== */
+function computeStructuralInputs(){
+  const modules=objects.filter(o=>o.type==='module');
+  const panels=objects.filter(o=>['extpanel','intpanel','partition'].includes(o.type));
+  // self-weight estimate from panel volume × material density (kg) → kN
+  let panelMass=0;panels.forEach(o=>{const t=0.12;const vol=(o.w||1.2)*(o.h||3)*t;panelMass+=vol*(MATERIALS[o.material]?.density||1500);});
+  const footprint=modules.reduce((a,o)=>a+o.w*o.l,0)||0;
+  // vertical stacking: count modules sharing footprint to estimate storeys
+  const cells={};let storeys=1;modules.forEach(o=>{const k=`${Math.round(o.mesh.position.x)}|${Math.round(o.mesh.position.z)}`;cells[k]=(cells[k]||0)+1;storeys=Math.max(storeys,cells[k]);});
+  const moduleSelfWeight=modules.length*22;            // ~22 kN per module shell (estimate)
+  const deadFromPanels=panelMass*9.81/1000;            // kN
+  const totalDead=moduleSelfWeight+deadFromPanels;     // kN
+  const liveLoad=footprint*2.0;                        // 2.0 kPa residential live load → kN
+  const maxSpan=modules.reduce((a,o)=>Math.max(a,Math.max(o.w,o.l)),0)||0;
+  const maxAxial=(totalDead+liveLoad)/Math.max(1,Object.keys(cells).length); // per stacking column
+  return {
+    moduleCount:modules.length, panelCount:panels.length, storeys,
+    footprint_m2:+footprint.toFixed(1), maxSpan_m:+maxSpan.toFixed(2),
+    totalDeadLoad_kN:+totalDead.toFixed(1), totalLiveLoad_kN:+liveLoad.toFixed(1),
+    maxAxialLoad_kN:+maxAxial.toFixed(1),
+  };
+}
+
+async function callCalcTree(inputs){
+  const body={modelId:CALCTREE.modelId,inputs:{}};
+  Object.entries(CALCTREE.inputMap).forEach(([appKey,ctKey])=>{if(inputs[appKey]!==undefined)body.inputs[ctKey]=inputs[appKey];});
+  const res=await fetch(CALCTREE.endpoint,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+CALCTREE.apiKey},body:JSON.stringify(body)});
+  if(!res.ok)throw new Error('CalcTree '+res.status+' '+res.statusText);
+  const data=await res.json();const out=data.outputs||data.results||data;const r={};
+  Object.entries(CALCTREE.outputMap).forEach(([ctKey,appKey])=>{if(out[ctKey]!==undefined)r[appKey]=out[ctKey];});
+  return {source:'live',...r};
+}
+function localEstimate(inputs){
+  // transparent placeholder check: utilisation = demand / nominal capacity
+  const capacityPerColumn=900;                          // kN nominal column capacity (estimate)
+  const util=Math.min(1.6,inputs.maxAxialLoad_kN/capacityPerColumn);
+  const deflection=Math.min(60,inputs.maxSpan_m*inputs.maxSpan_m*2.4);  // mm, rough
+  const defLimit=inputs.maxSpan_m*1000/300;             // L/300
+  const pass=util<=1.0 && deflection<=defLimit;
+  return {source:'mock',utilisation:+util.toFixed(2),pass,governing:util>1?'Axial capacity':deflection>defLimit?'Deflection L/300':'OK',deflection:+deflection.toFixed(1),deflectionLimit:+defLimit.toFixed(1)};
+}
+
+async function runAnalysis(){
+  setTab('struct');
+  if(!objects.some(o=>o.type==='module')){setStatus('Add at least one module first');renderStruct('Add modules to analyse.');return null;}
+  const inputs=computeStructuralInputs();
+  renderStruct('loading',inputs);setStatus('Running structural analysis…');
+  let result;
+  try{
+    result = CALCTREE.enabled ? await callCalcTree(inputs) : localEstimate(inputs);
+  }catch(err){
+    console.warn('CalcTree failed, falling back to local estimate:',err);
+    result={...localEstimate(inputs),source:'mock',error:String(err)};
+  }
+  lastAnalysis={inputs,result,at:new Date().toISOString()};
+  renderStruct('done',inputs,result);
+  setStatus('Structural analysis: '+(result.pass?'PASS':'FAIL')+' ('+result.source+')');
+  emit('analysis:complete',lastAnalysis);
+  return lastAnalysis;
+}
+
+function renderStruct(stateOrMsg,inputs,result){
+  const el=document.getElementById('struct-content');if(!el)return;
+  if(stateOrMsg==='loading'){el.innerHTML=`<div class="verdict idle"><i class="ti ti-loader-2 spin"></i> Calculating…</div>`+inputCard(inputs);return;}
+  if(typeof stateOrMsg==='string'&&stateOrMsg!=='done'&&stateOrMsg!=='loading'){el.innerHTML=`<div class="verdict idle"><i class="ti ti-calculator"></i> ${stateOrMsg||'Run a structural analysis to see results.'}</div>`+(objects.some(o=>o.type==='module')?inputCard(computeStructuralInputs()):'');return;}
+  if(!result){el.innerHTML=`<div class="verdict idle"><i class="ti ti-calculator"></i> Press “Run Structural”.</div>`+(objects.some(o=>o.type==='module')?inputCard(computeStructuralInputs()):'');return;}
+  const u=result.utilisation??0;const pct=Math.min(100,Math.round(u*100));const col=u>1?'var(--bad)':u>0.85?'var(--warn)':'var(--good)';
+  el.innerHTML=`
+    <div class="verdict ${result.pass?'pass':'fail'}"><i class="ti ${result.pass?'ti-circle-check':'ti-alert-triangle'}"></i>${result.pass?'PASS':'FAIL'} — ${result.governing||''}</div>
+    <div class="struct-card"><h4>Result <span class="src-tag ${result.source==='live'?'src-live':'src-mock'}">${result.source==='live'?'CalcTree':'Local estimate'}</span></h4>
+      <div class="metric"><span>Utilisation (D/C)</span><span class="v" style="color:${col}">${(u*100).toFixed(0)}%</span></div>
+      <div class="ratio-bar"><span style="width:${pct}%;background:${col}"></span></div>
+      ${result.deflection!==undefined?`<div class="metric" style="margin-top:10px"><span>Max deflection</span><span class="v">${result.deflection} mm</span></div>`:''}
+      ${result.deflectionLimit!==undefined?`<div class="metric"><span>Limit (L/300)</span><span class="v">${result.deflectionLimit} mm</span></div>`:''}
+      ${result.error?`<div class="metric"><span style="color:var(--warn)">CalcTree error</span><span class="v" style="color:var(--warn)">fell back</span></div>`:''}
+    </div>`+inputCard(inputs);
+}
+function inputCard(i){if(!i)return '';return `<div class="struct-card"><h4>Model inputs</h4>
+  <div class="metric"><span>Modules</span><span class="v">${i.moduleCount}</span></div>
+  <div class="metric"><span>Storeys (stacked)</span><span class="v">${i.storeys}</span></div>
+  <div class="metric"><span>Footprint</span><span class="v">${i.footprint_m2} m²</span></div>
+  <div class="metric"><span>Max span</span><span class="v">${i.maxSpan_m} m</span></div>
+  <div class="metric"><span>Dead load</span><span class="v">${i.totalDeadLoad_kN} kN</span></div>
+  <div class="metric"><span>Live load</span><span class="v">${i.totalLiveLoad_kN} kN</span></div>
+  <div class="metric"><span>Max axial / column</span><span class="v">${i.maxAxialLoad_kN} kN</span></div>
+  </div>`;}
+
+/* =====================================================================
+   VIEW / UTIL
+   ===================================================================== */
+function zoomToFit(){if(!objects.length){cam.target.set(0,1.5,0);cam.radius=18;cam.theta=0.9;cam.phi=1.0;updateCamera();return;}const box=new THREE.Box3();objects.forEach(o=>box.expandByObject(o.mesh));cam.target.copy(box.getCenter(new THREE.Vector3()));const s=box.getSize(new THREE.Vector3());cam.radius=Math.max(s.x,s.y,s.z)*1.8+6;updateCamera();setStatus('Zoomed to fit');}
+function setView(v){if(v==='top'){cam.theta=Math.PI/2;cam.phi=0.18;}else if(v==='front'){cam.theta=Math.PI/2;cam.phi=Math.PI/2-0.05;}else{cam.theta=0.9;cam.phi=1.0;}updateCamera();}
+function setStatus(m){document.getElementById('status-msg').textContent=m;}
+function updateCount(){document.getElementById('status-count').textContent='Objects: '+objects.length;}
+function setApiState(){document.getElementById('api-state').textContent='ready · CalcTree '+(CALCTREE.enabled?'live':'local');}
+function onKeyDown(e){if(e.target.tagName==='INPUT')return;const map={m:'module',s:'select',w:'window',d:'door',e:'extpanel',i:'intpanel',p:'partition'};if(map[e.key])setTool(map[e.key]);if(e.key==='Delete'||e.key==='Backspace')deleteSelected();if(e.key==='Escape')selectObject(null);if(e.key==='Z'&&e.shiftKey){zoomToFit();e.preventDefault();}if(e.key===' ')e.preventDefault();}
+
+window.addEventListener('load',()=>setTimeout(initThree,50));
+</script>
 </body>
 </html>
